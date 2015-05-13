@@ -1,0 +1,60 @@
+load Assignment_MarketData
+
+%% SUMMARY OF Assignment_MarketData.xls
+% EuriborSwap
+%columns:   1      2       3    4    5     6
+%         Term  Mty/Term  Bid  Mid  Ask  Source
+%                                          0=cash rate
+%                                          1=swap rate
+
+% Vcub
+%columns:   1      2     3     4      5      6      7      8      9     10      11    12     13     14     15     16
+%         Term  Strike  ATM  1,75%  2,00%  2,25%  2,50%  3,00%  3,50%  4,00%  5,00%  6,00%  7,00%  8,00%  9,00%  10,00%
+
+%CDS
+%columns:   1    2    3   4
+%         Date  UBS  JPM  DB
+
+
+%%
+t=EuriborSwap(:,1);
+%date=EuriborSwap(:,2);
+midrate=EuriborSwap(:,4)/100;
+
+
+%%
+
+notional=1685.347000;
+coupon_rate=0.04019;
+issue_date=datenum(2005,06,24);
+friday=weekday(issue_date); % remember: 1=Sunday 7=Saturday
+maturity=datenum(2035,06,29);
+singular_contract=notional/4;
+
+%% DISCOUNT FACTORS
+tau(33,1)=0;
+tau(2:end,:)=t(2:end)-t(1:end-1);
+
+disc(1:12,1)=1./(1+midrate(1:12).*tau(1:12));
+
+disc(13,1)=1/(1+midrate(13));
+
+for i=14:33
+
+    disc(i)=(1-midrate(i)*sum(disc(i-1)))/(1+midrate(i)*tau(i));
+
+end
+
+
+%%
+ bond_price=sum(notional*coupon_rate*disc)+notional*disc(end);
+
+%%
+
+
+
+
+
+
+
+

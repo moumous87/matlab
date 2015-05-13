@@ -1,0 +1,32 @@
+
+Installing the NaN-tb for Octave and Matlab:
+--------------------------------------------
+a) Extract files and save them in /your/directory/structure/to/NaN/
+
+b) Include the path with one of the following commands: 
+	addpath('/your/directory/structure/to/NaN/')
+	path('/your/directory/structure/to/NaN/',path)
+   Make sure the functions in the NaN-toolbox are found before the default functions.  
+   	
+c) run NANINSTTEST 
+This checks whether the installation was successful. 
+
+d) [OPTIONAL]: 
+  To improve speed, you can use the MEX-version of SUMSKIPNAN. 
+  Some precompiled binaries are provided. If your platform is not supported, 
+  compile the C-Mex-function SUMSKIPNAN_MEX.CPP using
+    mex sumskipnan_mex.cpp
+  The oct-file sumskipnan_oct.cc is broken, but Octave can also use 
+  the mex-file.  
+    mkoctfile --mex sumskipnan_mex.cpp
+
+  Run NANINSTTEST again to check the stability of the compiled SUMSKIPNAN.  
+
+e) HINT: if SUMSKIPNAN_MEX causes problems, you can savely remove it. 
+Then the (slower) M-file is used. 
+
+
+	$Id: INSTALL 5598 2009-03-10 11:18:13Z schloegl $
+	Copyright (c) 2000-2003,2005,2006,2009 by Alois Schloegl <a.schloegl@ieee.org>	
+	WWW: http://hci.tugraz.at/~schloegl/matlab/NaN/
+
