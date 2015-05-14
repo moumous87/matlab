@@ -1,0 +1,138 @@
+clear all
+
+%We load the database
+db=dlmread('zdatabase.txt','\t');
+%%
+%We save the number of information signals in our file
+nv=28;
+
+%We indicate the variables that we want to use and the number of stocks
+%that we want to include in the portfolios
+var=[2 5 7 15];
+
+num=100;
+
+%We indicate the pre-filtering size
+minc=200;
+
+%We indicate the lenght of the investment period
+le=3;
+
+
+%We convert all the -999 in the database into missing values
+db(db==-999)=NaN;
+
+%We load a file with the strings of the names of the Information Variables
+run signals
+
+%We split the database into its components
+dat=datenum(db(:,1:3));
+time=db(:,4);
+names=db(:,5);
+mcap=db(:,6);
+dbx=[db(:,7:end) db(:,6)];
+
+clear db
+
+
+%We estract the list of the stocks, periods and dates
+ti=unique(time);
+na=unique(names);
+dates=unique(dat);
+
+%We define the number of stocks, the number of dates and the number of
+%investment periods
+ns=size(na,1);
+nd=size(ti,1);
+np=floor((nd-1)/le);
+
+%We initialize vectors for portfolio returns and consistencies
+%This is a way to speed up the code, i.e. we just create in advance a
+%vector of zeros with already the final dimension of the vector after
+%running the loops
+etop=zeros(np*le,size(var,2)); %equally weighted top portfolios
+ebot=etop; %equally weighted bottom portfolios
+eben=etop; %equally weighted benchmark
+ctop=etop;
+cbot=etop;
+
+
+%THINGS WE GONNA DO IN EVERY ITERATION
+%1 FIND DATA
+%2 RANKING STOCKS (ACCORDING TO THE INFO SIGNALS)
+%3 BUILDING THE PORTFOLIO
+%4 MEASURE FUTURE RETURNS
+
+
+%We run a first outer loop on the base of the number of information signals
+%chosen for the task
+for i=1:size(var,2)
+    
+   
+        
+    %An inner loop will serve to repeat the ranking and invesmtment
+    %decision each month
+    for j=1:np
+        
+        %We individuate the time indicator of the observation
+            t=(j-1)*le+1;
+        
+        %We extract the sub-database with the observations that we
+        %will use in this particular iteration
+        dbx2=dbx((time==ti(t) & mcap>=minc),:);
+        
+        %We extract the sub-database where the value of the signal is
+        %non-missing
+        dbm=dbx2(isfinite(dbx2(:,var(i))),:);
+        
+        %We sort the rows of our sample on the base of he specific
+        %information signal
+        [dbs ind]=sortrows(dbm,-1*var(i));
+        num2=min(num,0.5*size(dbs,1));
+        
+        for k=1:le
+        
+            %We save the equally weighted returns of the portfolios
+            etop((j-1)*le+k,i)=mean(dbs(1:num2,nv+k));
+            ebot((j-1)*le+k,i)=mean(dbs(end-num2:end,nv+k));
+            eben((j-1)*le+k,i)=mean(dbs(1:end,nv+k));
+            
+            %We calculate the consistency
+            ctop((j-1)*le+k,i)=size(find(dbs(1:num2,nv+k)>eben((j-1)*le+k,i)),1)/num2;
+            cbot((j-1)*le+k,i)=size(find(dbs(end-num2:end,nv+k)<eben((j-1)*le+k,i)),1)/num2;
+        end
+    end
+    
+    %We save the name of the signal
+    sn(1,i)=signal(var(i));
+    
+    ptop=ret2tick(etop(:,i));
+    pbot=ret2tick(ebot(:,i));
+    pben=ret2tick(eben(:,i));
+
+    %We plot the results
+    figure
+    plot(dates(1:size(ptop,1)),[ptop pbot pben])
+    legend('Top','Bottom','Benchmark')
+    grid on
+    dateaxis('x',12)
+    title(strcat(sn(i)))
+    
+end    
+
+
+xlswrite('Diagnostics.xls',sn,'Top','B1')
+xlswrite('Diagnostics.xls',[m2xdate(dates(2:np*le+1)) etop],'Top','A2')
+
+xlswrite('Diagnostics.xls',sn,'Bottom','B1')
+xlswrite('Diagnostics.xls',[m2xdate(dates(2:np*le+1)) ebot],'Bottom','A2')
+
+xlswrite('Diagnostics.xls',sn,'Bench','B1')
+xlswrite('Diagnostics.xls',[m2xdate(dates(2:np*le+1)) eben],'Bench','A2')
+
+xlswrite('Diagnostics.xls',sn,'CTop','B1')
+xlswrite('Diagnostics.xls',[m2xdate(dates(2:np*le+1)) ctop],'CTop','A2')
+
+xlswrite('Diagnostics.xls',sn,'CBottom','B1')
+xlswrite('Diagnostics.xls',[m2xdate(dates(2:np*le+1)) cbot],'CBottom','A2')
+    
