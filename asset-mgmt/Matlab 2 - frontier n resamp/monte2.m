@@ -1,4 +1,4 @@
-%We efine the moments of our multivariate distribution
+%We define the moments of our multivariate distribution
 er=[0.1 0.05];
 sd=[0.2 0.01];
 
